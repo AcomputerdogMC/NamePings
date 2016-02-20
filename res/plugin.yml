@@ -1,0 +1,50 @@
+name: NamePings
+version: 0.1.6
+description: Pings a player when their name is mentioned
+author: acomputerdog
+main: net.acomputerdog.pings.PluginNamePings
+
+commands:
+  sendping:
+    description: Manually send a ping
+    permission: namepings.command.sendping
+    usage: /sendping <target>
+    aliases: [ping]
+  togglepings:
+    description: Block or unblock pings
+    permission: namepings.command.togglepings
+    usage: /toggleping
+    aliases: [setpings,setping,toggleping]
+  forceping:
+    description: Forcibly send a ping
+    permission: namepings.command.forceping
+    usage: /forceping <target>
+    aliases: [fping,pingf]
+  reloadnamepings:
+    description: Reload plugin configuration
+    permission: namepings.command.reload
+    usage: /reloadnamepings
+    aliases: [reloadnp]
+
+permissions:
+  namepings.command.sendping:
+    description: Allow sending pings
+    default: true
+  namepings.command.togglepings:
+    description: Allow use of /togglepings
+    default: true
+  namepings.command.forceping:
+    description: Allow use of /forceping
+    default: op
+  namepings.blockreceive:
+    description: block receiving pings
+    default: false
+  namepings.ignoretimeout:
+    description: ignore minimum time between pings
+    default: op
+  namepings.command.reload:
+    description: Allow use of /reloadnamepings
+    default: op
+  namepings.sendchat:
+    description: allow sending pings through name mentions
+    default: true

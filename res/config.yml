@@ -1,0 +1,10 @@
+# NamePings config file
+
+# The name of the sound effect to play.  Must be a valid MC effect, as used in /playsound
+sound_name: "random.orb"
+
+# Minimum delay in ticks between pings to a specific player
+ping_delay: 20
+
+# If true, allows players to be pinged by mentioning their name in chat.  May cause lag with large volumes of chat.
+enable_name_pings: true
