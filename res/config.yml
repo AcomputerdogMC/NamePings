@@ -1,7 +1,7 @@
 # NamePings config file
 
 # The name of the sound effect to play.  Must be a valid MC effect, as used in /playsound
-sound_name: "random.orb"
+sound_name: "entity.experience_orb.touch"
 
 # Minimum delay in ticks between pings to a specific player
 ping_delay: 20
