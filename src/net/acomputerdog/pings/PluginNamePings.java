@@ -21,7 +21,7 @@ public class PluginNamePings extends JavaPlugin implements Listener {
     private boolean allowNamePings;
 
     private File blockedPingsFile;
-    private List<String> blockedPings;
+    private List<UUID> blockedPings;
 
     private Map<Player, Timeout> timeouts;
     private long currentTick = 0;
@@ -110,7 +110,7 @@ public class PluginNamePings extends JavaPlugin implements Listener {
     /*
     Listens for an async chat event
      */
-    @EventHandler(priority = EventPriority.MONITOR) //, ignoreCancelled = true
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onAsyncChat(AsyncPlayerChatEvent e) {
         if (allowNamePings) {
             sendPings(e.getMessage(), e.getRecipients());
@@ -124,7 +124,11 @@ public class PluginNamePings extends JavaPlugin implements Listener {
         try (BufferedReader reader = new BufferedReader(new FileReader(blockedPingsFile))){
             while (reader.ready()) {
                 String line = reader.readLine();
-                blockedPings.add(line);
+                try {
+                    blockedPings.add(UUID.fromString(line));
+                } catch (Exception e) {
+                    getLogger().warning("Invalid UUID: " + line);
+                }
             }
         } catch (IOException e) {
             getLogger().warning("Exception loading blocked pings list!");
@@ -137,8 +141,8 @@ public class PluginNamePings extends JavaPlugin implements Listener {
      */
     private void saveBlockedPings() {
         try (Writer writer = new FileWriter(blockedPingsFile)) {
-            for (String str : blockedPings) {
-                writer.write(str);
+            for (UUID uuid : blockedPings) {
+                writer.write(uuid.toString());
                 writer.write("\n");
             }
         } catch (IOException e) {
@@ -164,7 +168,7 @@ public class PluginNamePings extends JavaPlugin implements Listener {
             sender.sendMessage(ChatColor.RED + "That player could not be found!");
             return;
         }
-        if (blockedPings.contains(player.getUniqueId().toString())) {
+        if (blockedPings.contains(player.getUniqueId())) {
             sender.sendMessage(ChatColor.RED + "That player does not allow pings!");
             return;
         }
@@ -186,7 +190,7 @@ public class PluginNamePings extends JavaPlugin implements Listener {
             sender.sendMessage(ChatColor.RED + "You do not have permission!");
             return;
         }
-        String uuid = player.getUniqueId().toString();
+        UUID uuid = player.getUniqueId();
 
         //if the list contains the uuid then remove it
         //if not then add it
@@ -262,7 +266,7 @@ public class PluginNamePings extends JavaPlugin implements Listener {
         for (String word : words) {
             int length = word.length();
             if (length >= shortest && length <= longest) { //make sure word is not too small or too long
-                targets.stream().filter(player -> player.getName().equals(word)).forEach(player -> {sendPing(player); System.out.print("Pinging");});
+                targets.stream().filter(player -> player.getName().equals(word)).forEach(this::sendPing);
             }
         }
     }
@@ -272,6 +276,9 @@ public class PluginNamePings extends JavaPlugin implements Listener {
      */
     private void sendPing(Player player) {
         Timeout timeout = timeouts.get(player);
+        if (blockedPings.contains(player.getUniqueId())) {
+            return;
+        }
         if (timeout != null) { //if timeout exists for player
             if (currentTick - timeout.startTime <= pingTimeout) { //if timeout has time remaining
                 return; //timeout in progress, don't ping
