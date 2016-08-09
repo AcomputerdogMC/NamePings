@@ -34,18 +34,14 @@ public class PluginNamePings extends JavaPlugin implements Listener {
      */
     @Override
     public void onEnable() {
-        if (!getDataFolder().isDirectory()) {
-            getLogger().warning("Data directory does not exist, it will be created.");
-            getDataFolder().mkdirs();
-        }
-        if (!new File(super.getDataFolder(), "config.yml").exists()) {
-            getLogger().warning("Configuration file does not exist, it will be created.");
-            saveDefaultConfig();
+        if (!getDataFolder().isDirectory() && !getDataFolder().mkdirs()) {
+            getLogger().warning("Unable to create data directory.");
         }
 
         blockedPings = new ArrayList<>();
         timeouts = new HashMap<>();
 
+        saveDefaultConfig(); //only saves if it doesn't exist
         reloadConfig();
         soundName = getConfig().getString("sound_name");
         pingTimeout = getConfig().getInt("ping_delay");
