@@ -8,7 +8,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
@@ -26,8 +25,7 @@ public class PluginNamePings extends JavaPlugin implements Listener {
     private Map<Player, Timeout> timeouts;
     private long currentTick = 0;
 
-    //don't reset during onEnable or onDisable
-    private boolean reloading = false;
+    private boolean loaded = false;
 
     /*
     Called when plugin is enabled
@@ -56,13 +54,15 @@ public class PluginNamePings extends JavaPlugin implements Listener {
             saveBlockedPings();
         }
 
-        if (!reloading) {
-            PluginManager m = getServer().getPluginManager();
-            m.registerEvents(this, this);
+        if (!loaded) {
+            getServer().getPluginManager().registerEvents(this, this);
         }
 
+        getServer().getScheduler().cancelTasks(this);
         // counts ticks, because there is no bukkit API to get the current tick number...
         getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> currentTick++, 0, 1);
+
+        loaded = true;
     }
 
     /*
@@ -228,10 +228,8 @@ public class PluginNamePings extends JavaPlugin implements Listener {
             sender.sendMessage(ChatColor.RED + "You do not have permission!");
             return;
         }
-        reloading = true;
         onDisable();
         onEnable();
-        reloading = false;
         sender.sendMessage(ChatColor.AQUA + "Reload complete.");
     }
 
