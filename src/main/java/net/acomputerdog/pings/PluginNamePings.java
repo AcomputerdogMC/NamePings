@@ -8,11 +8,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.Level;
 
+/**
+ * Plugin main class
+ */
 public class PluginNamePings extends JavaPlugin implements Listener {
 
     private String soundName;
@@ -20,9 +25,11 @@ public class PluginNamePings extends JavaPlugin implements Listener {
     private boolean allowNamePings;
 
     private File blockedPingsFile;
+
+    // TODO database
     private List<UUID> blockedPings;
 
-    private Map<Player, Timeout> timeouts;
+    private Map<Player, Long> timeouts;
     private long currentTick = 0;
 
     private boolean loaded = false;
@@ -59,7 +66,9 @@ public class PluginNamePings extends JavaPlugin implements Listener {
         }
 
         getServer().getScheduler().cancelTasks(this);
+
         // counts ticks, because there is no bukkit API to get the current tick number...
+        // TODO set a minimum precision for performance
         getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> currentTick++, 0, 1);
 
         loaded = true;
@@ -113,6 +122,11 @@ public class PluginNamePings extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerLogout(PlayerQuitEvent e) {
+        timeouts.remove(e.getPlayer());
+    }
+
     /*
     Loads list of blocked pings
      */
@@ -120,15 +134,10 @@ public class PluginNamePings extends JavaPlugin implements Listener {
         try (BufferedReader reader = new BufferedReader(new FileReader(blockedPingsFile))){
             while (reader.ready()) {
                 String line = reader.readLine();
-                try {
-                    blockedPings.add(UUID.fromString(line));
-                } catch (Exception e) {
-                    getLogger().warning("Invalid UUID: " + line);
-                }
+                blockedPings.add(UUID.fromString(line));
             }
         } catch (IOException e) {
-            getLogger().warning("Exception loading blocked pings list!");
-            e.printStackTrace();
+            getLogger().log(Level.SEVERE, "Exception loading blocked pings", e);
         }
     }
 
@@ -142,8 +151,7 @@ public class PluginNamePings extends JavaPlugin implements Listener {
                 writer.write("\n");
             }
         } catch (IOException e) {
-            getLogger().warning("Exception saving blocked pings list!");
-            e.printStackTrace();
+            getLogger().log(Level.SEVERE, "Exception saving blocked pings", e);
         }
     }
 
@@ -239,7 +247,7 @@ public class PluginNamePings extends JavaPlugin implements Listener {
     private void sendPings(String message, Set<Player> targets) {
 
         //don't bother if no targets
-        if (targets.size() == 0) {
+        if (targets.isEmpty()) {
             return;
         }
 
@@ -269,17 +277,18 @@ public class PluginNamePings extends JavaPlugin implements Listener {
     Sends a ping to a player, and updates the timeout if necessary
      */
     private void sendPing(Player player) {
-        Timeout timeout = timeouts.get(player);
+        // make sure that player has not blocked pings
         if (blockedPings.contains(player.getUniqueId())) {
             return;
         }
-        if (timeout != null) { //if timeout exists for player
-            if (currentTick - timeout.startTime <= pingTimeout) { //if timeout has time remaining
-                return; //timeout in progress, don't ping
-            }
+
+        // if player has a timeout, check if it has expired
+        Long timeout = timeouts.get(player);
+        if (timeout != null && currentTick - timeout <= pingTimeout) { //if timeout has time remaining
+            return; //timeout in progress, don't ping
         }
-        timeout = new Timeout(currentTick); //reset timeout
-        timeouts.put(player, timeout); //store timeout
+
+        timeouts.put(player, currentTick); //reset timeout
         player.playSound(player.getLocation(), soundName, 1.0f, 1.0f); //send the actual ping
     }
 }
