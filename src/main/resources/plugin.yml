@@ -1,5 +1,5 @@
-name: NamePings
-version: 0.1.7
+name: ${name}
+version: ${version}
 description: Pings a player when their name is mentioned
 author: acomputerdog
 main: net.acomputerdog.pings.PluginNamePings
