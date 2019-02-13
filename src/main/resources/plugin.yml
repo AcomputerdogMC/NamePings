@@ -3,6 +3,7 @@ version: ${version}
 description: Pings a player when their name is mentioned
 author: acomputerdog
 main: net.acomputerdog.pings.PluginNamePings
+api-version: 1.13
 
 commands:
   sendping:
